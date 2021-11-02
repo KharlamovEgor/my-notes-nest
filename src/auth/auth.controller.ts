@@ -1,7 +1,15 @@
-import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Post,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { AuthService } from './auth.service';
+import { AuthDto } from './dto/auth.dto';
+import { PasswordValidationPipe } from '../pipes/password-validation.pipe';
 
 @Controller('auth')
 export class AuthController {
@@ -10,19 +18,22 @@ export class AuthController {
     private readonly authService: AuthService,
   ) {}
 
+  @UsePipes(ValidationPipe, PasswordValidationPipe)
   @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    const oldUser = await this.usersService.findUser(createUserDto.login);
+  @UsePipes(new PasswordValidationPipe())
+  async register(@Body() authDto: AuthDto) {
+    const oldUser = await this.usersService.findUser(authDto.login);
 
     if (oldUser) {
       throw new BadRequestException();
     }
 
-    return this.usersService.createUser(createUserDto);
+    return this.usersService.createUser(authDto);
   }
 
+  @UsePipes(ValidationPipe)
   @Post('login')
-  async login(@Body() { login: userLogin, password }: CreateUserDto) {
+  async login(@Body() { login: userLogin, password }: AuthDto) {
     const { login } = await this.usersService.validateUser(userLogin, password);
     return await this.authService.login(login);
   }
