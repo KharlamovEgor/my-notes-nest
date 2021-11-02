@@ -20,7 +20,6 @@ export class AuthController {
 
   @UsePipes(ValidationPipe, PasswordValidationPipe)
   @Post('register')
-  @UsePipes(new PasswordValidationPipe())
   async register(@Body() authDto: AuthDto) {
     const oldUser = await this.usersService.findUser(authDto.login);
 
